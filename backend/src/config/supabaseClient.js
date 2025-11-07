@@ -1,13 +1,18 @@
-import dotenv from "dotenv";
-import { createClient } from "@supabase/supabase-js";
+// File: backend/src/supabaseClient.js
+// Deskripsi: File untuk koneksi database Supabase.
 
-dotenv.config();
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+// Pastikan .env dimuat sebelum variabel dipakai
+dotenv.config(); 
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error("Supabase environment variables are not set.");
+if (!supabaseUrl || !supabaseKey) {
+  // Ini akan menghentikan server jika .env tidak diatur
+  throw new Error("Supabase URL atau Key tidak di-set di file .env. Periksa file .env Anda.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);

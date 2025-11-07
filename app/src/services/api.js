@@ -34,4 +34,14 @@ export const Api = {
       body: JSON.stringify(payload),
     });
   },
+
+  /**
+   * INI KODE BARU ANDA:
+   * Menghapus semua sensor readings history.
+   */
+  clearHistory() {
+    return request("/api/readings", { // Menggunakan endpoint yg konsisten
+      method: "DELETE",
+    });
+  },
 };

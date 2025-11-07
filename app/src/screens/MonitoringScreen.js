@@ -6,6 +6,8 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Button, // <-- BARU
+  Alert,  // <-- BARU
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMqttSensor } from "../hooks/useMqttSensor.js";
@@ -48,57 +50,92 @@ export function MonitoringScreen() {
     }
   }, [fetchReadings]);
 
+  // --- FUNGSI HANDLER BARU UNTUK TOMBOL HAPUS ---
+  const handleClearHistory = () => {
+    Alert.alert(
+      "Hapus Histori",
+      "Apakah Anda yakin ingin menghapus semua histori? Tindakan ini tidak dapat dibatalkan.",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Hapus",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const result = await Api.clearHistory();
+              Alert.alert("Sukses", result.message);
+              setReadings([]); // Langsung kosongkan data di UI
+            } catch (err) {
+              Alert.alert("Error", err.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+  // --- BATAS FUNGSI HANDLER BARU ---
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.card}>
-        <Text style={styles.title}>Realtime Temperature</Text>
-        <View style={styles.valueRow}>
-          <Text style={styles.temperatureText}>
-            {typeof temperature === "number" ? `${temperature.toFixed(2)}°C` : "--"}
-          </Text>
+      <ScrollView
+        style={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <View style={styles.card}>
+          <Text style={styles.title}>Realtime Temperature</Text>
+          <View style={styles.valueRow}>
+            <Text style={styles.temperatureText}>
+              {typeof temperature === "number" ? `${temperature.toFixed(2)}°C` : "--"}
+            </Text>
+          </View>
+          <Text style={styles.metaText}>MQTT status: {connectionState}</Text>
+          {timestamp && (
+            <Text style={styles.metaText}>
+              Last update: {new Date(timestamp).toLocaleString()}
+            </Text>
+          )}
+          {mqttError && <Text style={styles.errorText}>MQTT error: {mqttError}</Text>}
         </View>
-        <Text style={styles.metaText}>MQTT status: {connectionState}</Text>
-        {timestamp && (
-          <Text style={styles.metaText}>
-            Last update: {new Date(timestamp).toLocaleString()}
-          </Text>
-        )}
-        {mqttError && <Text style={styles.errorText}>MQTT error: {mqttError}</Text>}
-      </View>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Triggered Readings History</Text>
-        {loading && <ActivityIndicator />}
-      </View>
-      {apiError && <Text style={styles.errorText}>Failed to load history: {apiError}</Text>}
-      <DataTable
-        columns={[
-          {
-            key: "recorded_at",
-            title: "Timestamp",
-            render: (value) => (value ? new Date(value).toLocaleString() : "--"),
-          },
-          {
-            key: "temperature",
-            title: "Temperature (°C)",
-            render: (value) =>
-              typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-          },
-          {
-            key: "threshold_value",
-            title: "Threshold (°C)",
-            render: (value) =>
-              typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-          },
-        ]}
-        data={readings}
-        keyExtractor={(item) => item.id}
-      />
-    </ScrollView>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Triggered Readings History</Text>
+          {/* --- TOMBOL BARU DITAMBAHKAN DI SINI --- */}
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <Button
+              title="Hapus Semua"
+              color="#FF3B30" // Warna merah untuk aksi destruktif
+              onPress={handleClearHistory}
+            />
+          )}
+          {/* --- BATAS TOMBOL BARU --- */}
+        </View>
+        {apiError && <Text style={styles.errorText}>Failed to load history: {apiError}</Text>}
+        <DataTable
+          columns={[
+            {
+              key: "recorded_at",
+              title: "Timestamp",
+              render: (value) => (value ? new Date(value).toLocaleString() : "--"),
+            },
+            {
+              key: "temperature",
+              title: "Temperature (°C)",
+              render: (value) =>
+                typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+            },
+            {
+              key: "threshold_value",
+              title: "Threshold (°C)",
+              render: (value) =>
+                typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+            },
+          ]}
+          data={readings}
+          keyExtractor={(item) => item.id}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 }
